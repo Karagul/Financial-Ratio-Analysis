@@ -33,6 +33,9 @@ def time_drawdown(dataframe, index_name, window_length, start_date, end_date, st
     rolling_dd = s - rolling_max
     df = pd.concat([s, rolling_max, rolling_dd], axis=1)
     df.columns = [index_name, 'rol_max_%d' % window_length, 'rol_dd_%d' % window_length]
+    # Format decimal point and dataframe name
+    df = np.round(df, decimals=3)
+    df.name = 'Time Drawdown'
     return df
 
 def max_drawdown(dataframe, index_name, window_length, start_date, end_date, start_gap):
@@ -86,6 +89,9 @@ def rolling_beta(dataframe,columns_name,window_length,min_periods,start_gap):
         for i in range(0, len(cov_matrix)-min_periods+1, 1):
             beta_df.loc[i, j] = cov_matrix[i+min_periods-1].iloc[0][1]/cov_matrix[i+min_periods-1].iloc[1][1]
     beta_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
+    # Format decimal point and dataframe name
+    beta_df = np.round(beta_df, decimals=3)
+    beta_df.name = '36 Month Rolling Beta'
     return beta_df
 
 def rolling_annulized_return(dataframe,columns_name,window_length,min_periods,start_gap):
@@ -112,6 +118,9 @@ def rolling_annulized_return(dataframe,columns_name,window_length,min_periods,st
     for j in columns_name:
         annual_return_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: np.prod(1+x)**(12/len(x))-1)[min_periods-1:].values
     annual_return_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
+    # Format decimal point and dataframe name
+    annual_return_df = np.round(annual_return_df, decimals=3)
+    annual_return_df.name = '36 Month Rolling Annual Return'
     return annual_return_df
 
 def cumulative_return(dataframe,columns_name,window_length,min_periods,start_gap):
@@ -137,7 +146,10 @@ def cumulative_return(dataframe,columns_name,window_length,min_periods,start_gap
     cum_return_df = pd.DataFrame(columns = columns_name)
     for j in columns_name:
         cum_return_df[j] = np.cumprod(1+sub_dataframe[j])
-    cum_return_df.index = dataframe.loc[start_gap:,'Date'].values    
+    cum_return_df.index = dataframe.loc[start_gap:,'Date'].values
+    # Format decimal point and dataframe name
+    cum_return_df = np.round(cum_return_df, decimals=3)  
+    cum_return_df.name = 'Cummulative Return'
     return cum_return_df  
 
 def rolling_sortino_ratio(dataframe, columns_name, window_length, min_periods, start_gap, MAR, threshold, order=2):
@@ -169,6 +181,9 @@ def rolling_sortino_ratio(dataframe, columns_name, window_length, min_periods, s
         sortino_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: (np.prod(1+x)**(1/window_length) - (1+MAR)) * 12 / np.sqrt(r.lpm(x, threshold, order)))[min_periods-1:].values
         # sortino_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: np.sqrt(r.lpm(x, threshold, order)))[min_periods-1:]
     sortino_ratio_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
+    # Format decimal point and dataframe name
+    sortino_ratio_df = np.round(sortino_ratio_df, decimals=3)
+    sortino_ratio_df.name = '36 Month Rolling Sortino Ratio'
     return sortino_ratio_df
 
 def rolling_omega_ratio(dataframe, columns_name, window_length, min_periods, start_gap, MAR):
@@ -195,8 +210,11 @@ def rolling_omega_ratio(dataframe, columns_name, window_length, min_periods, sta
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))    
     omega_ratio_df = pd.DataFrame(columns = columns_name)
     for j in columns_name:
-        omega_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: (sum(x[x>MAR]/-sum(x[x<MAR]))))[min_periods-1:].values
+        omega_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: (sum(x[x>MAR]-MAR**(1/12))/-sum(x[x<MAR]-MAR**(1/12))))[min_periods-1:].values
     omega_ratio_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
+    # Format decimal point and dataframe name
+    omega_ratio_df = np.round(omega_ratio_df, decimals=3)
+    omega_ratio_df.name = '36 Month Rolling Omega Ratio'
     return omega_ratio_df
                                        
                                            
@@ -224,7 +242,10 @@ def rolling_sharpe_ratio(dataframe,columns_name,window_length,min_periods,start_
     sharpe_ratio_df = pd.DataFrame(columns = columns_name)
     for j in columns_name:
         sharpe_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: np.mean(x - (1+benchmark) ** (1/12) + 1) * 12 / (r.vol_p(x - (1+benchmark) ** (1/12) + 1) * np.sqrt(12)))[min_periods-1:].values
-    sharpe_ratio_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values    
+    sharpe_ratio_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
+    # Format decimal point and dataframe name
+    sharpe_ratio_df = np.round(sharpe_ratio_df, decimals=3)
+    sharpe_ratio_df.name = '36 Month Rolling Sharpe Ratio'
     return sharpe_ratio_df
 
 def rolling_alpha(dataframe,columns_name,window_length,min_periods,start_gap):
@@ -249,15 +270,16 @@ def rolling_alpha(dataframe,columns_name,window_length,min_periods,start_gap):
     sub_dataframe = dataframe[columns_name].loc[start_gap:]
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))    
     alpha_df = pd.DataFrame(columns = columns_name[0:3])
-
     # Generate  predicted number with beta and market index mean (russell 3000)
     for j in columns_name[0:3]: 
         alpha_df[j] = sub_dataframe[j].rolling(window_length, min_periods).mean()[min_periods-1:].values \
             - sub_dataframe['Russell 3000'].rolling(window_length, min_periods).mean()[min_periods-1:].values * rolling_beta_df[j].values
     alpha_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values    
-    
     # Get the annulized alpha
-    alpha_df = (alpha_df + 1)**12 - 1                
+    alpha_df = (alpha_df + 1)**12 - 1
+    # Format decimal point and dataframe name
+    alpha_df = np.round(alpha_df, decimals=3)
+    alpha_df.name = '36 Month Rolling Annual Alpha'           
     return alpha_df
 
 def rolling_corr(dataframe,columns_name,target_benchmark,window_length,min_periods,start_gap):
@@ -284,6 +306,9 @@ def rolling_corr(dataframe,columns_name,target_benchmark,window_length,min_perio
     corr_df = pd.DataFrame(index = range(len(sub_dataframe.index)-min_periods+1), columns = [columns_name[0:3]])
     corr_df = sub_dataframe.rolling(window_length, min_periods).corr(sub_dataframe[target_benchmark])[min_periods-1:]
     corr_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
+    # Format decimal point and dataframe name
+    corr_df = np.round(corr_df, decimals=3)
+    corr_df.name = '36 Month Rolling Corr'
     return corr_df
 
 def draw_down(dataframe, columns_name, start_gap):
@@ -305,5 +330,9 @@ def draw_down(dataframe, columns_name, start_gap):
     for i in range(1,len(return_df),1):
         for j in range(len(columns_name)):
             cum_df.iloc[i,j] = min(cum_df.iloc[i-1,j] * return_df.iloc[i,j],1)
-    return cum_df[start_gap:]
+    cum_df = cum_df[start_gap:]
+    # Format decimal point and dataframe name
+    cum_df = np.round(cum_df, decimals=3)
+    cum_df.name = 'draw_down'
+    return cum_df
     
