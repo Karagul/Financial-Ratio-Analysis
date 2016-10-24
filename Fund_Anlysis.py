@@ -65,8 +65,8 @@ if __name__ == '__main__':
     rolling_annual_return_df = m.rolling_annulized_return(df_data, 
         columns_name=columns_name, 
         window_length=36, min_periods=36, start_gap=6)
-    ### Rolling cummulative return
-    rolling_cum_return_df = m.rolling_cumulative_return(df_data, 
+    ### Cummulative return
+    cum_return_df = m.cumulative_return(df_data, 
         columns_name=columns_name, 
         window_length=36, min_periods=36, start_gap=6)
     ### Rolling sortino ratio
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     ### Graph for result
     fig, axes = plt.subplots(nrows=2, ncols=2)
     rolling_annual_return_df.plot(ax=axes[0,0]); axes[0,0].set_title('36 Months Rolling Annual Return')
-    rolling_cum_return_df.plot(ax=axes[0,1]); axes[0,1].set_title('36 Months Rolling Cummulative Return')
+    cum_return_df.plot(ax=axes[0,1]); axes[0,1].set_title('Cummulative Return')
     rolling_alpha_df.plot(ax=axes[1,0]); axes[1,0].set_title('36 Months Rolling Alpha')
     rolling_beta_df.plot(ax=axes[1,1]); axes[1,1].set_title('36 Months Rolling Beta')
 
