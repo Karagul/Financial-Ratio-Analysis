@@ -8,30 +8,7 @@ Module for genearal financial ratio, and output is in dataframe format
 import pandas as pd
 import numpy as np
 
-def concat_data(filename):
-    '''Concate all excel sheets and organize them into a dataframe, and add necessary columns (Date, Year) for future use.
-    
-    Given a well-format excel sheet with fixed column names, extract the updated information and put 
-    it into dataframe.
-    
-    Args:
-        filename is the string format of excel file name
 
-    Returns:
-        A dataframe which contains all necessary informaton
-    '''
-    df_fund = pd.ExcelFile(filename)
-    sheet_name = df_fund.sheet_names[0:5]
-    index = list(range(0,len(df_fund.parse(sheet_name[1]).iloc[:,0])))
-    columns = ['Date']
-    df_data = pd.DataFrame(index = index, columns = columns)
-    df_data['Date'] = df_fund.parse(sheet_name[1]).iloc[:,0]
-    for i in range(0,len(sheet_name)):
-        a = df_fund.parse(str(sheet_name[i])).drop('Date',1)
-        df_data = pd.concat([df_data,a], axis = 1)
-    # Generate year column for future calculation
-    df_data['Year'] = pd.DatetimeIndex(df_data['Date']).year
-    return df_data
 
 def annulized_return(dataframe, index_name, smallest_interval, biggest_interval, interval, start_gap):
     '''Calcuate annulized return and output the table for given time interval
@@ -54,6 +31,9 @@ def annulized_return(dataframe, index_name, smallest_interval, biggest_interval,
             Annulized_Return_df.loc[j,'%d_Year' % i] = np.prod(dataframe[j].iloc[-12*i:]+1)**(1/i) - 1
     for j in index_name:
         Annulized_Return_df.loc[j,'Since Inception'] = np.prod(dataframe[j]+1)**(12/(len(dataframe[j])-start_gap)) - 1
+    # Format decimal point and dataframe name
+    Annulized_Return_df = np.round(Annulized_Return_df, decimals=3)
+    Annulized_Return_df.name = 'Annualized Return'
     return Annulized_Return_df
 
 def calendar_return(dataframe, index_name, start_year, end_year, interval):
@@ -77,6 +57,9 @@ def calendar_return(dataframe, index_name, start_year, end_year, interval):
             Calendar_Return_df.loc[j,i] = np.prod(dataframe[j][dataframe['Year']==i]+1) - 1
     for j in index_name:
         Calendar_Return_df.loc[j,'YTD'] = np.prod(dataframe[j][dataframe['Year']==max(dataframe['Year'])]+1) - 1
+    # Format decimal point and dataframe name
+    Calendar_Return_df = np.round(Calendar_Return_df, decimals=3)
+    Calendar_Return_df.name = 'Calendar Return'
     return Calendar_Return_df
 
 def downside_std(dataframe, index_name, smallest_interval, biggest_interval, interval, threshold, order, start_gap):
@@ -118,6 +101,9 @@ def downside_std(dataframe, index_name, smallest_interval, biggest_interval, int
         # Set the minimum of each to 0
         diff = np.clip(diff,0,10000)
         Downside_std_df.loc[j,'Since Inception'] = np.sqrt(np.sum(diff ** order) / (len(returns)-start_gap)) * np.sqrt(12)
+    # Format decimal point and dataframe name
+    Downside_std_df = np.round(Downside_std_df, decimals=3)
+    Downside_std_df.name = 'Downside Deviation'
     return Downside_std_df
 
 def lpm(returns, threshold, order):
@@ -188,6 +174,9 @@ def sortino_ratio(dataframe, index_name, smallest_interval, biggest_interval, in
         # excess_returns = np.clip(excess_returns,0,10000)
         returns = dataframe.loc[start_gap:,j]
         Sortino_df.loc[j,'Since Inception'] = period_excess_returns * 12 / np.sqrt(lpm(returns, threshold, order))
+    # Format decimal point and dataframe name
+    Sortino_df = np.round(Sortino_df, decimals=3)
+    Sortino_df.name = 'Sortino Ratio'
     return Sortino_df
     
     
@@ -216,6 +205,9 @@ def sharpe_ratio(dataframe, index_name, smallest_interval, biggest_interval, int
     for j in index_name:
         excess_returns = dataframe.loc[start_gap:,j] - (1+benchmark) ** (1/12) + 1 # pay attention to first six month gap
         Sharpe_df.loc[j,'Since Inception'] = np.mean(excess_returns) * 12 / (vol_p(excess_returns) * np.sqrt(12))
+    # Format decimal point and dataframe name
+    Sharpe_df = np.round(Sharpe_df, decimals=3)
+    Sharpe_df.name = 'Sharpe Ratio'
     return Sharpe_df
 
 def standard_deviation(dataframe, index_name, smallest_interval, biggest_interval, interval, start_gap):
@@ -239,6 +231,9 @@ def standard_deviation(dataframe, index_name, smallest_interval, biggest_interva
             Stv_df.loc[j,'%d_Year' % i] = np.std(dataframe[j].iloc[-12*i:], ddof = 1) * np.sqrt(12)
     for j in index_name:
         Stv_df.loc[j,'Since Inception'] = np.std(dataframe.loc[start_gap:,j], ddof = 1) * np.sqrt(12) # pay attention to first six month gap
+    # Format decimal point and dataframe name
+    Stv_df = np.round(Stv_df, decimals=3)
+    Stv_df.name = 'Standard Devation'
     return Stv_df
 
 
@@ -267,6 +262,9 @@ def beta_table(dataframe, index_name, market_index, smallest_interval, biggest_i
     for j in index_name:
         sub_dataframe = dataframe[[j,market_index]].loc[start_gap:] # pay attention to first six month gap
         beta_df.loc[j,'Since Inception'] = beta(sub_dataframe)
+    # Format decimal point and dataframe name
+    beta_df = np.round(beta_df, decimals=3)
+    beta_df.name = 'Beta (Russell 3000)'
     return beta_df
 
 def beta(sub_dataframe):
@@ -304,9 +302,12 @@ def omega_ratio(dataframe, index_name, smallest_interval, biggest_interval, inte
     Omega_df = pd.DataFrame(index = index_name)
     for j in index_name:
         for i in range(smallest_interval, biggest_interval+1, interval):
-            Omega_df.loc[j,'%d_Year' % i] = sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]>MAR])/-sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]<MAR])
+            Omega_df.loc[j,'%d_Year' % i] = sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]>MAR]-MAR**(1/12))/-sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]<MAR]-MAR**(1/12))
     for j in index_name:
-        Omega_df.loc[j,'Since Inception'] = sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]>MAR])/-sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]<MAR])
+        Omega_df.loc[j,'Since Inception'] = sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]>MAR]-MAR**(1/12))/-sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]<MAR]-MAR**(1/12))
+    # Format decimal point and dataframe name
+    Omega_df = np.round(Omega_df, decimals=3)
+    Omega_df.name = 'Omega Ratio'
     return Omega_df
 
 def summary_table(dataframe, index_name, columns, market_index, MAR, threshold, order, start_gap):
@@ -339,4 +340,7 @@ def summary_table(dataframe, index_name, columns, market_index, MAR, threshold, 
         Summary_df.loc[j,'Slugging Ratio'] = np.mean(dataframe[j][dataframe[j]>0]) / -np.mean(dataframe[j][dataframe[j]<0])
         Summary_df.loc[j,'Up-Capture Russell'] = 100 * np.mean(dataframe[j][dataframe[market_index]>0])/np.mean(dataframe[market_index][dataframe[market_index]>0])
         Summary_df.loc[j,'Down-Capture Russell'] = 100 * np.mean(dataframe[j][dataframe[market_index]<0])/np.mean(dataframe[market_index][dataframe[market_index]<0])
+    # Format decimal point and dataframe name
+    Summary_df = np.round(Summary_df, decimals=3)
+    Summary_df.name = 'Summary Table'
     return Summary_df
