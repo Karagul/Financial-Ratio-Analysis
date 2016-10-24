@@ -114,7 +114,7 @@ def rolling_annulized_return(dataframe,columns_name,window_length,min_periods,st
     annual_return_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
     return annual_return_df
 
-def rolling_cumulative_return(dataframe,columns_name,window_length,min_periods,start_gap):
+def cumulative_return(dataframe,columns_name,window_length,min_periods,start_gap):
     '''Calculate cummulative return given time window and columns name
     
     Args:
@@ -136,8 +136,8 @@ def rolling_cumulative_return(dataframe,columns_name,window_length,min_periods,s
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     cum_return_df = pd.DataFrame(columns = columns_name)
     for j in columns_name:
-        cum_return_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: np.prod(1+x)-1)[min_periods-1:].values
-    cum_return_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values    
+        cum_return_df[j] = np.cumprod(1+sub_dataframe[j])
+    cum_return_df.index = dataframe.loc[start_gap:,'Date'].values    
     return cum_return_df  
 
 def rolling_sortino_ratio(dataframe, columns_name, window_length, min_periods, start_gap, MAR, threshold, order=2):
