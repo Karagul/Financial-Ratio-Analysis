@@ -141,12 +141,13 @@ def cumulative_return(dataframe,columns_name,window_length,min_periods,start_gap
     Returns:
         Return a dataframe which include the cummulative return for all index include market index at different time.
     ''' 
-    sub_dataframe = dataframe[columns_name].loc[start_gap:]
+    # We include start_gap-1 period to force the original date is 0
+    sub_dataframe = dataframe[columns_name].loc[(start_gap-1):]
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     cum_return_df = pd.DataFrame(columns = columns_name)
     for j in columns_name:
-        cum_return_df[j] = np.cumprod(1+sub_dataframe[j])
-    cum_return_df.index = dataframe.loc[start_gap:,'Date'].values
+        cum_return_df[j] = np.cumprod(1+sub_dataframe[j])-1
+    cum_return_df.index = dataframe.loc[(start_gap-1):,'Date'].values
     # Format decimal point and dataframe name
     cum_return_df = np.round(cum_return_df, decimals=3)  
     cum_return_df.name = 'Cummulative Return'
