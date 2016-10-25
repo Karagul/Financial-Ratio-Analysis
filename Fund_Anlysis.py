@@ -101,40 +101,58 @@ if __name__ == '__main__':
     ### Graph for result
     with PdfPages('Rolling Ratio Figure.pdf') as pdf:
         plt.style.use('fivethirtyeight')
-        rolling_annual_return_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Annual Return')
+        rolling_annual_return_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Annualized Return')
         plt.legend(prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Annualized Return')
         pdf.savefig()
         
         cum_return_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='Cummulative Return')
         plt.legend(loc='upper left', prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Cummulative Return')
         pdf.savefig()
         
         rolling_alpha_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Alpha')
         plt.legend(prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Annualized Alpha')
         pdf.savefig()
         
         rolling_beta_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Beta')
         plt.legend(prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Beta')
         pdf.savefig()
         
         rolling_corr_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Correlation')
         plt.legend(prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Correlation')
         pdf.savefig()        
         
         rolling_sharpe_ratio_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Sharpe Ratio')
         plt.legend(loc='upper left',prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Annualized Sharpe Ratio')
         pdf.savefig()    
         
         rolling_sortino_ratio_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Sortino')
         plt.legend(loc='upper left',prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Annualized Sortino Ratio')
         pdf.savefig()
         
         rolling_omega_ratio_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'HFRI Fund of Funds Composite Index']].plot(title='36 Months Rolling Omega Ratio')    
         plt.legend(loc='upper left',prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Omega Ratio')
         pdf.savefig()
         
         dd_fig = dd_df[['TeamCo Client Composite', 'HFRI Fund Weighted Composite Index', 'Russell 3000']].plot(title='Draw Down - Fund vs Competitors vs Benchmark')
         plt.legend(loc='lower left',prop={'size':12})
+        plt.xlabel('Year')
+        plt.ylabel('Draw Down')
         pdf.savefig()        
         
         # max_dd_df.plot(title='Current Drawdown Changing Graph')
