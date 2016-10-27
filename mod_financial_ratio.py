@@ -10,23 +10,28 @@ import numpy as np
 
 
 
-def annulized_return(dataframe, index_name, smallest_interval, biggest_interval, interval, start_gap):
+def annulized_return(dataframe, index_name, start_gap):
     '''Calcuate annulized return and output the table for given time interval
     
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        smallest_interval is the smallest yearly interval, int format
-        biggest_interval is the biggest yearly interval, int format
-        interval describe the gap, int format
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
             the value is defined by a global variable start_gap
 
     Returns:
         A Dataframe with given index name as row names, given time interval as column names, annulized return as the cell value
     '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     Annulized_Return_df = pd.DataFrame(index = index_name)
-    for i in range(smallest_interval,biggest_interval+1,interval):
+    for i in range(1,biggest_interval+1,interval):
         for j in index_name:
             Annulized_Return_df.loc[j,'%d_Year' % i] = np.prod(dataframe[j].iloc[-12*i:]+1)**(1/i) - 1
     for j in index_name:
@@ -62,15 +67,12 @@ def calendar_return(dataframe, index_name, start_year, end_year, interval):
     Calendar_Return_df.name = 'Calendar Return'
     return Calendar_Return_df
 
-def downside_std(dataframe, index_name, smallest_interval, biggest_interval, interval, threshold, order, start_gap):
+def downside_std(dataframe, index_name, threshold, order, start_gap):
     ''' Calculate a lower partial moment of the returns given threshold and order
 
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        smallest_interval is the smallest yearly interval, int format
-        biggest_interval is the biggest yearly interval, int format
-        interval describe the gap, int format
         threshold is the value of threshold for downside deviation calculation, normally is zero, int format
         order is the number of partial moment, int format    
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
@@ -79,9 +81,17 @@ def downside_std(dataframe, index_name, smallest_interval, biggest_interval, int
     Returns:
         A Dataframe with given index name as row names, given time interval as column names, downside deviation as the cell value 
     '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     Downside_std_df = pd.DataFrame(index = index_name)
     for j in index_name:
-        for i in range(smallest_interval,biggest_interval+1,interval):
+        for i in range(1,biggest_interval+1,interval):
             returns = dataframe[j].iloc[-12*i:]
             # Create an array he same length as returns containing the minimum return threshold
             threshold_array = np.empty(len(returns)) 
@@ -144,15 +154,12 @@ def vol_p(returns):
     '''
     return np.std(returns)
 
-def sortino_ratio(dataframe, index_name, smallest_interval, biggest_interval, interval, MAR, threshold, order, start_gap):
+def sortino_ratio(dataframe, index_name, MAR, threshold, order, start_gap):
     '''Calculate the sortino ratio of target index
 
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        smallest_interval is the smallest yearly interval, int format
-        biggest_interval is the biggest yearly interval, int format
-        interval describe the gap, int format
         MAR is the minimum acceptable return, used for calculating the excess return 
         threshold is the value of threshold for downside deviation calculation, normally is zero, int format
         order is the number of partial moment, int format    
@@ -162,9 +169,17 @@ def sortino_ratio(dataframe, index_name, smallest_interval, biggest_interval, in
     Returns:
         This method return the sortino ratio dataframe for target index across differnt year length
     '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     Sortino_df = pd.DataFrame(index = index_name)
     for j in index_name:
-        for i in range(smallest_interval, biggest_interval+1, interval):
+        for i in range(1, biggest_interval+1, interval):
             period_excess_returns = np.prod(dataframe[j].iloc[-12*i:]+1)**(1/(i*12)) - (1+MAR)
             # excess_returns = np.clip(excess_returns,0,10000)
             returns = dataframe[j].iloc[-12*i:]
@@ -181,25 +196,30 @@ def sortino_ratio(dataframe, index_name, smallest_interval, biggest_interval, in
     
     
     
-def sharpe_ratio(dataframe, index_name, smallest_interval, biggest_interval, interval, benchmark, start_gap):
+def sharpe_ratio(dataframe, index_name, benchmark, start_gap):
     '''Calculate the sharpe ratio of target index
 
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        smallest_interval is the smallest yearly interval, int format
-        biggest_interval is the biggest yearly interval, int format
-        interval describe the gap, int format
         benchmark is the value of risk free return, used for calculating the excess return
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
             the value is defined by a global variable start_gap   
 
     Returns:
         This method return the sharpe ratio dataframe for target index across differnt year length
-    '''    
+    '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     Sharpe_df = pd.DataFrame(index = index_name)
     for j in index_name:
-        for i in range(smallest_interval, biggest_interval+1, interval):
+        for i in range(1, biggest_interval+1, interval):
             excess_returns = dataframe[j].iloc[-12*i:] - (1+benchmark) ** (1/12) + 1
             Sharpe_df.loc[j,'%d_Year' % i] = np.mean(excess_returns) * 12 / (vol_p(excess_returns) * np.sqrt(12))
     for j in index_name:
@@ -210,24 +230,29 @@ def sharpe_ratio(dataframe, index_name, smallest_interval, biggest_interval, int
     Sharpe_df.name = 'Sharpe Ratio'
     return Sharpe_df
 
-def standard_deviation(dataframe, index_name, smallest_interval, biggest_interval, interval, start_gap):
+def standard_deviation(dataframe, index_name, start_gap):
     '''Calculate the standard deviation of target index
 
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        smallest_interval is the smallest yearly interval, int format
-        biggest_interval is the biggest yearly interval, int format
-        interval describe the gap, int format
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
             the value is defined by a global variable start_gap   
 
     Returns:
         This method return the standard devation dataframe for target index across differnt year length  
     '''  
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     Stv_df = pd.DataFrame(index = index_name)
     for j in index_name:
-        for i in range(smallest_interval, biggest_interval+1, interval):
+        for i in range(1, biggest_interval+1, interval):
             Stv_df.loc[j,'%d_Year' % i] = np.std(dataframe[j].iloc[-12*i:], ddof = 1) * np.sqrt(12)
     for j in index_name:
         Stv_df.loc[j,'Since Inception'] = np.std(dataframe.loc[start_gap:,j], ddof = 1) * np.sqrt(12) # pay attention to first six month gap
@@ -237,8 +262,8 @@ def standard_deviation(dataframe, index_name, smallest_interval, biggest_interva
     return Stv_df
 
 
-def beta_table(dataframe, index_name, market_index, smallest_interval, biggest_interval, interval, start_gap):
-    '''Calculate the beta of target index with market index
+def beta_table(dataframe, index_name, market_index, start_gap, condition = None):
+    '''Calculate the beta of target index with market index, could do conditional analysis
 
     Args:
         dataframe is the dataframe passed by concat_data() function
@@ -249,22 +274,41 @@ def beta_table(dataframe, index_name, market_index, smallest_interval, biggest_i
         biggest_interval is the biggest yearly interval, int format
         interval describe the gap, int format
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
-            the value is defined by a global variable start_gap   
+            the value is defined by a global variable start_gap
+        Condition(None, 'Positive','Non-positive') could do conditional analysis. For example, positive means for those period when market index is 
+            positive, the correlation between market index and fund/competitor
 
     Returns:
         This method return the beta dataframe for target index with given market index across differnt year length  
-    '''  
+    '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     beta_df = pd.DataFrame(index = index_name)
-    for j in index_name:
-        for i in range(smallest_interval, biggest_interval+1, interval):
-            sub_dataframe = dataframe[[j,market_index]].iloc[-12*i:]
-            beta_df.loc[j,'%d_Year' % i] = beta(sub_dataframe)
-    for j in index_name:
-        sub_dataframe = dataframe[[j,market_index]].loc[start_gap:] # pay attention to first six month gap
-        beta_df.loc[j,'Since Inception'] = beta(sub_dataframe)
+    if condition == None:
+        for j in index_name:
+            for i in range(1, biggest_interval+1, interval):
+                sub_dataframe = dataframe[[j,market_index]].iloc[-12*i:]
+                beta_df.loc[j,'%d_Year' % i] = beta(sub_dataframe)
+        for j in index_name:
+            sub_dataframe = dataframe[[j,market_index]].loc[start_gap:] # pay attention to first six month gap
+            beta_df.loc[j,'Since Inception'] = beta(sub_dataframe)
+    elif condition == 'Positive':
+        for j in index_name:
+            sub_dataframe = dataframe[[j,market_index]][dataframe[market_index]>0]
+            beta_df.loc[j,'Positive Beta'] = beta(sub_dataframe)        
+    elif condition == 'Non-positive':
+        for j in index_name:
+            sub_dataframe = dataframe[[j,market_index]][dataframe[market_index]<=0].loc[start_gap:]              
+            beta_df.loc[j,'Non Positive Beta'] = beta(sub_dataframe)
     # Format decimal point and dataframe name
     beta_df = np.round(beta_df, decimals=3)
-    beta_df.name = 'Beta (Russell 3000)'
+    beta_df.name = 'Beta (Russell 3000) with %s Condition' %condition
     return beta_df
 
 def beta(sub_dataframe):
@@ -282,15 +326,12 @@ def beta(sub_dataframe):
     beta_value = np.cov(m)[0][1]/np.cov(m)[1][1]
     return beta_value
 
-def omega_ratio(dataframe, index_name, smallest_interval, biggest_interval, interval, MAR, threshold, order, start_gap):
+def omega_ratio(dataframe, index_name, MAR, threshold, order, start_gap):
     '''Calculate the Omega ratio of target index
 
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        smallest_interval is the smallest yearly interval, int format
-        biggest_interval is the biggest yearly interval, int format
-        interval describe the gap, int format
         threshold is the value of threshold for downside deviation calculation, normally is zero, int format
         order is the number of partial moment, here is one, int format    
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
@@ -299,17 +340,73 @@ def omega_ratio(dataframe, index_name, smallest_interval, biggest_interval, inte
     Returns:
         This method return the Omega ratio dataframe for target index across differnt year length
     '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
     Omega_df = pd.DataFrame(index = index_name)
     for j in index_name:
-        for i in range(smallest_interval, biggest_interval+1, interval):
-            Omega_df.loc[j,'%d_Year' % i] = sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]>MAR]-MAR**(1/12))/-sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]<MAR]-MAR**(1/12))
+        for i in range(1, biggest_interval+1, interval):
+            Omega_df.loc[j,'%d_Year' % i] = sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]>MAR]-MAR**(1/12))\
+                                            /-sum(dataframe[j].iloc[-12*i:][dataframe[j].iloc[-12*i:]<MAR]-MAR**(1/12))
     for j in index_name:
-        Omega_df.loc[j,'Since Inception'] = sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]>MAR]-MAR**(1/12))/-sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]<MAR]-MAR**(1/12))
+        Omega_df.loc[j,'Since Inception'] = sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]>MAR]-MAR**(1/12))\
+                                            /-sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]<MAR]-MAR**(1/12))
     # Format decimal point and dataframe name
     Omega_df = np.round(Omega_df, decimals=3)
     Omega_df.name = 'Omega Ratio'
     return Omega_df
 
+    
+def corr_table(dataframe, index_name, target_mkt_index, start_gap, condition = None):
+    '''Calculate the rolling correlation of target index, could do conditional analysis
+
+    Args:
+        dataframe is the dataframe passed by concat_data() function
+        index_name is the index we want to calculate, must be consistent with index name in the excel sheet
+        target_mkt_index is the target index you want to check with the correlation. Generally, it is market index (Russell 3000) 
+        start_gap is the gap at the beginning of the data, which is a six month blank period without. 
+            the value is defined by a global variable start_gap   
+        Condition(None, 'Positive','Non-positive') could do conditional analysis. For example, positive means for those period when market index is 
+            positive, the correlation between market index and fund/competitor
+            
+    Returns:
+        This method return the correlation dataframe for target index across differnt year length
+    '''
+    # Get time length dynamically
+    max_y = (len(dataframe)-start_gap)//12
+    if max_y % 2==0:
+        biggest_interval = max_y-1
+    else:
+        biggest_interval = max_y
+    interval = 2
+    # Calculation
+    corr_df = pd.DataFrame(index=index_name)
+    if condition == None:
+        for j in index_name:
+            for i in range(1, biggest_interval+1, interval):
+                corr_df.loc[j,'%d_Year' % i] = np.corrcoef(dataframe[j].iloc[-12*i:].values, \
+                    dataframe[target_mkt_index].iloc[-12*i:].values, rowvar=0)[0,1]
+        for j in index_name:
+            corr_df.loc[j,'Since Inception'] = np.corrcoef(dataframe[j].iloc[start_gap:].values, \
+                    dataframe[target_mkt_index].iloc[start_gap:].values, rowvar=0)[0,1]
+    elif condition == 'Positive':
+        for j in index_name:
+            corr_df.loc[j,'Positive Correaltion'] = np.corrcoef(dataframe[j][dataframe[target_mkt_index]>0].values, \
+                    dataframe[target_mkt_index][dataframe[target_mkt_index]>0].values, rowvar=0)[0,1]        
+    elif condition == 'Non-positive':
+        for j in index_name:
+            corr_df.loc[j,'Non-positive Correaltion'] = np.corrcoef(dataframe[j][dataframe[target_mkt_index]<=0].iloc[start_gap:].values, \
+                    dataframe[target_mkt_index][dataframe[target_mkt_index]<=0].iloc[start_gap:].values, rowvar=0)[0,1]                
+    corr_df = np.round(corr_df, decimals=3)
+    corr_df.name = 'Correlation Table with %s Condition' %condition
+    return corr_df
+    
+    
 def summary_table(dataframe, index_name, columns, market_index, MAR, threshold, order, start_gap):
     '''Give the summary table for target index and describe batting average, omega ratio, up months, 
     down months, slugging ratio, up-capture russell and down-capture russell
@@ -334,7 +431,8 @@ def summary_table(dataframe, index_name, columns, market_index, MAR, threshold, 
     for j in index_name:
         # returns = dataframe[j]
         Summary_df.loc[j,'Batting Average'] = 100 * sum(dataframe[j]>0)/(len(dataframe[j]) - start_gap)
-        Summary_df.loc[j,'Omega Ratio'] = sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]>MAR])/abs(sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]<MAR]))
+        Summary_df.loc[j,'Omega Ratio'] = sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]>MAR])\
+                                                /abs(sum(dataframe[j].iloc[start_gap:][dataframe[j].iloc[start_gap:]<MAR]))
         Summary_df.loc[j,'Up Months'] = sum(dataframe[j]>0)
         Summary_df.loc[j,'Down Months'] = sum(dataframe[j]<0)
         Summary_df.loc[j,'Slugging Ratio'] = np.mean(dataframe[j][dataframe[j]>0]) / -np.mean(dataframe[j][dataframe[j]<0])
