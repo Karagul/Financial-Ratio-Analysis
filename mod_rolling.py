@@ -10,14 +10,12 @@ from numpy.lib.stride_tricks import as_strided
 import pandas as pd
 import mod_financial_ratio as r
 
-def time_drawdown(dataframe, index_name, window_length, start_date, end_date, start_gap):
+def time_drawdown(dataframe, index_name, start_gap):
     '''Calculate the drawdown time series number given time parameter
     
     Args:
         dataframe is the dataframe passed by concat_data() function
         index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-        window_length is the window time you want to take into account. If you want to check 1 year maximum draw
-            down, it should be 12, if checking the hold period, it should be 109.
         start_date shoud be an integer within [0,109), 109 is the length of all available data
         end_date should be an integer within (0,109]
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
@@ -26,6 +24,11 @@ def time_drawdown(dataframe, index_name, window_length, start_date, end_date, st
     Returns:
         A dataframe that contain drawdown of different index at different time within given time interval and time window
     '''
+    window_length = len(dataframe[index_name].loc[start_gap:])-1 # window_length is the window time you want to take into account. 
+    # If you want to check 1 year maximum draw down, it should be 12, if checking the hold period, it should be 109.
+    start_date = 0
+    end_date = len(dataframe[index_name].loc[start_gap:])-1
+    
     sub_dataframe = dataframe[index_name].loc[start_gap:]
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     s = np.cumprod(sub_dataframe.loc[start_date:end_date]+1)
@@ -38,7 +41,7 @@ def time_drawdown(dataframe, index_name, window_length, start_date, end_date, st
     df.name = 'Time Drawdown'
     return df
 
-def max_drawdown(dataframe, index_name, window_length, start_date, end_date, start_gap):
+def max_drawdown(dataframe, index_name, start_gap):
     '''Calculate the maximum drawdown given time parameter
     
     Args:
@@ -55,14 +58,20 @@ def max_drawdown(dataframe, index_name, window_length, start_date, end_date, sta
     Returns:
         A number which is the maximum drawdown within certain time length
     '''
+    window_length = len(dataframe[index_name].loc[start_gap:])-1
+    start_date = 0
+    end_date = len(dataframe[index_name].loc[start_gap:])-1
+    
     sub_dataframe = dataframe[index_name].loc[start_gap:]
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     s = np.cumprod(sub_dataframe.loc[start_date:end_date]+1)
     rolling_max = s.rolling(window_length, min_periods=0).max()
     rolling_dd = s - rolling_max
+    # max_dd = pd.DataFrame(np.min(rolling_dd), columns='Maximum Drawdown')
     max_dd = min(rolling_dd)
+    # max_dd.name = 'The maximum drawdown is'
     return print ('The maximum drawdown during %s to %s is %.4f' %(dataframe.loc[start_gap+start_date,'Date'],dataframe.loc[start_gap+end_date,'Date'],max_dd))
-
+    
 def rolling_beta(dataframe,columns_name,window_length,min_periods,start_gap):
     '''Calculate rolling beta given time window and columns name
     
@@ -283,7 +292,7 @@ def rolling_alpha(dataframe,columns_name,window_length,min_periods,start_gap):
     alpha_df.name = '36 Month Rolling Annual Alpha'           
     return alpha_df
 
-def rolling_corr(dataframe,columns_name,target_benchmark,window_length,min_periods,start_gap):
+def rolling_corr(dataframe,columns_name,target_mkt_index,window_length,min_periods,start_gap):
     '''Calculate the rolling correlation of target index
 
     Args:
@@ -295,7 +304,7 @@ def rolling_corr(dataframe,columns_name,target_benchmark,window_length,min_perio
         min_periods is the minimum period that you could take into account and make calculation. For example,
             if you set time window to be 36 months, and minimum period is 12, then all remaining interval at the beginning
             or end which has more than 12 months will all be taken into account.
-        target_benchmark is the target index you want to check with the correlation. Generally, it is market index (Russell 3000) 
+        target_mkt_index is the target index you want to check with the correlation. Generally, it is market index (Russell 3000) 
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
             the value is defined by a global variable start_gap   
 
@@ -305,7 +314,7 @@ def rolling_corr(dataframe,columns_name,target_benchmark,window_length,min_perio
     sub_dataframe = dataframe[columns_name].loc[start_gap:] # skip the start gap
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     corr_df = pd.DataFrame(index = range(len(sub_dataframe.index)-min_periods+1), columns = [columns_name[0:3]])
-    corr_df = sub_dataframe.rolling(window_length, min_periods).corr(sub_dataframe[target_benchmark])[min_periods-1:]
+    corr_df = sub_dataframe.rolling(window_length, min_periods).corr(sub_dataframe[target_mkt_index])[min_periods-1:]
     corr_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
     # Format decimal point and dataframe name
     corr_df = np.round(corr_df, decimals=3)
