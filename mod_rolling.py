@@ -10,12 +10,12 @@ from numpy.lib.stride_tricks import as_strided
 import pandas as pd
 import mod_financial_ratio as r
 
-def time_drawdown(dataframe, index_name, start_gap):
+def time_drawdown(dataframe, dd_index_name, start_gap):
     '''Calculate the drawdown time series number given time parameter
     
     Args:
         dataframe is the dataframe passed by concat_data() function
-        index_name is the index we want to calculate, must be consistent with index name in the excel sheet
+        dd_index_name is the index we want to calculate, must be consistent with index name in the excel sheet
         start_date shoud be an integer within [0,109), 109 is the length of all available data
         end_date should be an integer within (0,109]
         start_gap is the gap at the beginning of the data, which is a six month blank period without. 
@@ -24,30 +24,30 @@ def time_drawdown(dataframe, index_name, start_gap):
     Returns:
         A dataframe that contain drawdown of different index at different time within given time interval and time window
     '''
-    window_length = len(dataframe[index_name].loc[start_gap:])-1 # window_length is the window time you want to take into account. 
+    window_length = len(dataframe[dd_index_name].loc[start_gap:])-1 # window_length is the window time you want to take into account. 
     # If you want to check 1 year maximum draw down, it should be 12, if checking the hold period, it should be 109.
     start_date = 0
-    end_date = len(dataframe[index_name].loc[start_gap:])-1
+    end_date = len(dataframe[dd_index_name].loc[start_gap:])-1
     
-    sub_dataframe = dataframe[index_name].loc[start_gap:]
+    sub_dataframe = dataframe[dd_index_name].loc[start_gap:]
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     s = np.cumprod(sub_dataframe.loc[start_date:end_date]+1)
     rolling_max = s.rolling(window_length, min_periods=0).max()
     rolling_dd = s - rolling_max
     df = pd.concat([s, rolling_max, rolling_dd], axis=1)
-    df.columns = [index_name, 'rol_max_%d' % window_length, 'rol_dd_%d' % window_length]
+    df.columns = [dd_index_name, 'rol_max_%d' % window_length, 'rol_dd_%d' % window_length]
     # Format decimal point and dataframe name
     df = np.round(df, decimals=3)
     df.name = 'Time Drawdown'
     return df
 
-def max_drawdown(dataframe, index_name, start_gap):
+def max_drawdown(dataframe, dd_index_name, start_gap):
     '''Calculate the maximum drawdown given time parameter
     
     Args:
         dataframe is the dataframe passed by concat_data() function
-        index_name is the index we want to calculate, must be consistent with index name in the excel sheet
-            in this case, generally index_name include only one string(index name)
+        dd_index_name is the index we want to calculate, must be consistent with index name in the excel sheet
+            in this case, generally dd_index_name include only one string(index name)
         window_length is the window time you want to take into account. If you want to check 1 year maximum draw
             down, it should be 12, if checking the hold period, it should be 109.
         start_date shoud be an integer within [0,109), 109 is the length of all available data
@@ -58,19 +58,28 @@ def max_drawdown(dataframe, index_name, start_gap):
     Returns:
         A number which is the maximum drawdown within certain time length
     '''
-    window_length = len(dataframe[index_name].loc[start_gap:])-1
+    window_length = len(dataframe[dd_index_name].loc[start_gap:])-1
     start_date = 0
-    end_date = len(dataframe[index_name].loc[start_gap:])-1
+    end_date = len(dataframe[dd_index_name].loc[start_gap:])-1
     
-    sub_dataframe = dataframe[index_name].loc[start_gap:]
+    sub_dataframe = dataframe[dd_index_name].loc[start_gap:]
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     s = np.cumprod(sub_dataframe.loc[start_date:end_date]+1)
     rolling_max = s.rolling(window_length, min_periods=0).max()
     rolling_dd = s - rolling_max
-    # max_dd = pd.DataFrame(np.min(rolling_dd), columns='Maximum Drawdown')
     max_dd = min(rolling_dd)
+    # Get the time for peak, max_dd and recovery date
+    dd_month = rolling_dd[rolling_dd==max_dd].index[0]
+    peak_month = s[s==rolling_max[dd_month]].index[0]
+    s_after_peak = s[peak_month:]
+    end_dd_month = s_after_peak[s_after_peak>1].index[0]
+    # start_dd_month = rolling_dd.index[sum(rolling_dd[s==1].index < dd_month)]
+    # end_dd_month = rolling_dd.index[sum(rolling_dd[rolling_dd==0].index < dd_month)+1] # start month index+1 is the next 100% point
     # max_dd.name = 'The maximum drawdown is'
-    return print ('The maximum drawdown during %s to %s is %.4f' %(dataframe.loc[start_gap+start_date,'Date'],dataframe.loc[start_gap+end_date,'Date'],max_dd))
+    print('The maximum drawdown during %s to %s is %.4f' %(dataframe.loc[start_gap+start_date,'Date'],dataframe.loc[start_gap+end_date,'Date'],max_dd))
+    print('It happened on %s' %(str(dataframe['Date'].loc[start_gap+dd_month])))
+    print('The month go from peak to maximum draw down is %s months' %(dd_month-peak_month))
+    print('The month recover from maximum drawdown to zero is %s months' %(end_dd_month-dd_month))
     
 def rolling_beta(dataframe,columns_name,window_length,min_periods,start_gap):
     '''Calculate rolling beta given time window and columns name
@@ -251,7 +260,7 @@ def rolling_sharpe_ratio(dataframe,columns_name,window_length,min_periods,start_
     sub_dataframe.index = list(range(0,len(sub_dataframe.index),1))
     sharpe_ratio_df = pd.DataFrame(columns = columns_name)
     for j in columns_name:
-        sharpe_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: np.mean(x - (1+benchmark) ** (1/12) + 1) * 12 / (r.vol_p(x - (1+benchmark) ** (1/12) + 1) * np.sqrt(12)))[min_periods-1:].values
+        sharpe_ratio_df[j] = sub_dataframe[j].rolling(window_length, min_periods).apply(lambda x: np.mean(x - (1+benchmark) ** (1/12) + 1) * 12 / (np.std(x - (1+benchmark) ** (1/12) + 1, ddof=1) * np.sqrt(12)))[min_periods-1:].values
     sharpe_ratio_df.index = dataframe.loc[(min_periods+start_gap-1):,'Date'].values
     # Format decimal point and dataframe name
     sharpe_ratio_df = np.round(sharpe_ratio_df, decimals=3)

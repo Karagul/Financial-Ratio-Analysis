@@ -65,8 +65,8 @@ def multiple_dfs(df_list, sheets, file_name, spaces):
         worksheet.write_string(row, 0, dataframe.name)
         row = row + len(dataframe.index) + spaces + 1
     # Change format
-    worksheet.set_column('A:A', 35, format3)    
-    worksheet.set_column('B:B', 18, format1)
+    worksheet.set_column('A:A', 45, format3)    
+    worksheet.set_column('B:B', 23, format1)
     worksheet.set_column('C:C', 18, format1)
     worksheet.set_column('D:D', 18, format1)    
     worksheet.set_column('E:E', 18, format1)
