@@ -246,32 +246,32 @@ def graph_gen(pdf_name, index_name, rolling_annual_return_df, cum_return_df, rol
         
         # Plot radar plot
         # Beta
-        a = radar_plot(Beta_df, 'Beta Radar Chart', 'center left')
+        a = radar_plot(Beta_df.fillna(0.01), 'Beta Radar Chart', 'best')
         pdf.savefig(a) 
         plt.close()
         
         # Upside Beta
-        b = radar_plot(Beta_df_p, 'Beta Radar Chart (Upside)', 'best')
+        b = radar_plot(Beta_df_p.fillna(0.01), 'Beta Radar Chart (Upside)', 'best')
         pdf.savefig(b)
         plt.close()
         
         # Downside Beta
-        c = radar_plot(Beta_df_np, 'Beta Radar Chart (Downside)', 'best')
+        c = radar_plot(Beta_df_np.fillna(0.01), 'Beta Radar Chart (Downside)', 'best')
         pdf.savefig(c)
         plt.close()
         
         # Correlation
-        d = radar_plot(Corr_df, 'Correlation Radar Chart', 'center left')
+        d = radar_plot(Corr_df.fillna(0.01), 'Correlation Radar Chart', 'best')
         pdf.savefig(d)
         plt.close()
         
         # Upside Correlation
-        e = radar_plot(Corr_df_p, 'Correlation Radar Chart (Upside)', 'best')
+        e = radar_plot(Corr_df_p.fillna(0.01), 'Correlation Radar Chart (Upside)', 'best')
         pdf.savefig(e)
         plt.close()
         
         # Downside Correlation
-        f = radar_plot(Corr_df_np, 'Correlation Radar Chart (Downside)', 'best')
+        f = radar_plot(Corr_df_np.fillna(0.01), 'Correlation Radar Chart (Downside)', 'best')
         pdf.savefig(f)
         plt.close()
         

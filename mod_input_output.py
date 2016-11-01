@@ -20,7 +20,7 @@ def concat_data(filename):
         A dataframe which contains all necessary informaton
     '''
     df_fund = pd.ExcelFile(filename)
-    sheet_name = df_fund.sheet_names[0:5]
+    sheet_name = df_fund.sheet_names
     index = list(range(0,len(df_fund.parse(sheet_name[1]).iloc[:,0])))
     columns = ['Date']
     df_data = pd.DataFrame(index = index, columns = columns)
@@ -29,7 +29,7 @@ def concat_data(filename):
         a = df_fund.parse(str(sheet_name[i])).drop('Date',1)
         df_data = pd.concat([df_data,a], axis = 1)
     # Generate year column for future calculation
-    df_data['Year'] = pd.DatetimeIndex(df_data['Date']).year
+    # df_data['Year'] = pd.DatetimeIndex(df_data['Date']).year
     return df_data
     
     

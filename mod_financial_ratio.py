@@ -69,10 +69,8 @@ def calendar_return_table(dataframe, index_name_2):
     '''
     # Select target columns
     dataframe = dataframe.loc[:,index_name_2]
-
     # Calculation
-    Calendar_Return_df = ba.calendar_return(dataframe)
-    
+    Calendar_Return_df = ba.calendar_return(dataframe) 
     # Format and dataframe name
     Calendar_Return_df.name = 'Calendar Return'
     return Calendar_Return_df
@@ -183,7 +181,8 @@ def beta_table(dataframe, index_name_3, target_year, condition = None):
     # Format dataframe
     if condition is None:
         beta_df.columns = ['1_Year','3_Year','5_Year','7_Year','10_Year','15_Year','Since Inception']
-        beta_df = beta_df[target_year] 
+        beta_df = beta_df[target_year]
+    beta_df = beta_df.iloc[:-1,:] # Delete the last column of market index
     beta_df.name = 'Beta (Russell 3000) with %s Condition' %condition
     return beta_df
 
@@ -232,6 +231,7 @@ def corr_table(dataframe, index_name_3, target_mkt_index, target_year, condition
     if condition is None:
         corr_df.columns = ['1_Year','3_Year','5_Year','7_Year','10_Year','15_Year','Since Inception']
         corr_df = corr_df[target_year] 
+    corr_df = corr_df.iloc[:-1,:] # Delete the last column of market index
     corr_df.name = 'Correlation Table with %s Condition' %condition
     return corr_df
     

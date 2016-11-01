@@ -320,23 +320,13 @@ def corr(dataframe_b, target_mkt_index, condition = None):
     elif condition == 'Positive':
         for j in dataframe_b.columns:
             Inception = int(np.count_nonzero(~np.isnan(dataframe_b[j]))) 
-            corr_df.loc[j,'Positive Correaltion'] = np.corrcoef(dataframe_b[j][dataframe_b[target_mkt_index]>0].iloc[-Inception:].values, \
-                    dataframe_b[target_mkt_index][dataframe_b[target_mkt_index]>0].values, rowvar=0)[0,1]        
+            corr_df.loc[j,'Positive Correaltion'] = np.corrcoef(dataframe_b[j].iloc[-Inception:][dataframe_b[target_mkt_index]>0].values, \
+                    dataframe_b[target_mkt_index].iloc[-Inception:][dataframe_b[target_mkt_index]>0].values, rowvar=0)[0,1]        
     elif condition == 'Non-positive':
         for j in dataframe_b.columns:
             Inception = int(np.count_nonzero(~np.isnan(dataframe_b[j]))) 
-            corr_df.loc[j,'Non-positive Correaltion'] = np.corrcoef(dataframe_b[j][dataframe_b[target_mkt_index]<=0].iloc[-Inception:].values, \
-                    dataframe_b[target_mkt_index][dataframe_b[target_mkt_index]<=0].iloc[-Inception:].values, rowvar=0)[0,1]                
+            corr_df.loc[j,'Non-positive Correaltion'] = np.corrcoef(dataframe_b[j].iloc[-Inception:][dataframe_b[target_mkt_index]<=0].values, \
+                    dataframe_b[target_mkt_index].iloc[-Inception:][dataframe_b[target_mkt_index]<=0].values, rowvar=0)[0,1]                
     # Format dataframe name
     corr_df.name = 'Correlation Table with %s Condition' %condition
     return corr_df
-
-z_a = annulized_return(dataframe)
-z_c = calendar_return(dataframe_2)
-z_d_side = downside_std(dataframe,0)
-z_sharp = sharpe_ratio(dataframe,0.02)
-z_sortino = sortino_ratio(dataframe,0,0)
-z_std = standard_deviation(dataframe)
-z_beta = beta(dataframe_b,condition = None)
-z_o = omega_ratio(dataframe, 0)
-z_cor = corr(dataframe_b, target_mkt_index, condition = None)
